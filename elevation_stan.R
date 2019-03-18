@@ -25,7 +25,7 @@ stan_data <- list(
   z       = dat$elevation)
 
 
-model_stan  <-  stanc("model2.stan")
+model_stan  <-  stanc("model.stan")
 sm = stan_model(stanc_ret = model_stan, verbose=FALSE)
 
 #  Run the Model
@@ -114,5 +114,37 @@ pars_max_LL <- t(pars_max_LL)
 colnames(pars_max_LL) <- 'Values at max LL'
 plot_info_table(pars_max_LL) 
 
-dev.off()
 
+
+library(readr)
+estimated_pars <- read_csv("results_final.csv")
+
+prob_mod <- function(params)
+{
+  par_a  <- params[1]
+  par_b  <- params[2]
+  par_c  <- params[3]
+  prob_zero <- params[4]
+  z <- as.matrix(dat$elevation)
+
+  
+  prob <-  (( 1+exp( -par_a* par_b ) ) / (1+exp( par_a *( z - par_b ) ))  * (1-par_c) + par_c) 
+  return(prob)
+  
+} 
+
+
+
+
+dat$post_median <- prob_mod(estimated_pars$median)
+dat$post_lower <- prob_mod(estimated_pars$lower)
+dat$post_upper <- prob_mod(estimated_pars$upper)
+
+dat <- arrange(dat, elevation)
+
+plot(dat$elevation, dat$post_median, ylim = c(0,1), type = 'l', cex = 2)
+lines(dat$elevation, dat$post_lower, col = 'blue')
+lines(dat$elevation, dat$post_upper, col = 'blue')
+
+
+dev.off()
