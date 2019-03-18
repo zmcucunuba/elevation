@@ -134,7 +134,7 @@ prob_mod <- function(params)
 } 
 
 
-
+par(mfrow=c(1,1))
 
 dat$post_median <- prob_mod(estimated_pars$median)
 dat$post_lower <- prob_mod(estimated_pars$lower)
