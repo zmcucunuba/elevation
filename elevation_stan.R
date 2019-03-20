@@ -13,7 +13,8 @@ library(grid)
 library(gridExtra)
 
 
-dat <- read_excel("Illustration for Kelly - estimating the f function.xlsx", 'Sheet1')
+# dat <- read_excel("Illustration for Kelly - estimating the f function.xlsx", 'Sheet1')
+dat <- read_excel("df_elevation_chik.xlsx")
 dat <- dat[1:1120,]
 dat$trials <- 1
 
@@ -50,7 +51,7 @@ plot_info_table <- function(info){
 }
 
 
-pdf('res.pdf')
+pdf('res_chik.pdf')
 plot(fit, plotfun = "trace", pars = parameters, inc_warmup = TRUE)
 par(mfrow=c(2,2))
 hist(res_total$a, col = 'red', main = 'a')
@@ -68,7 +69,7 @@ plot_info_table(results) +
   ggtitle('Median and CrI of posterior dist')
 
 
-write.csv(results, 'results_final.csv')
+write.csv(results, 'results_final_chik.csv')
 
 estimated_pars <- results[,'median']
 
@@ -117,7 +118,7 @@ plot_info_table(pars_max_LL)
 
 
 library(readr)
-estimated_pars <- read_csv("results_final.csv")
+estimated_pars <- read_csv("results_final_chik.csv")
 
 prob_mod <- function(params)
 {
