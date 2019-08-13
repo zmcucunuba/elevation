@@ -12,10 +12,13 @@ library(readxl)
 library(grid)
 library(gridExtra)
 
+# elevation_model_stan  <-  stan_model('elevation_model.stan')
+# saveRDS(elevation_model_stan, "elevation_model_stan.RDS")
+elevation_model_stan  <-  readRDS('elevation_model.RDS')
 
-# dat <- read_excel("Illustration for Kelly - estimating the f function.xlsx", 'Sheet1')
-dat <- read_excel("df_elevation_chik.xlsx")
-dat <- dat[1:1120,]
+
+dat  <- readRDS('data/elevation_infected_chik.RDS')
+
 dat$trials <- 1
 
 stan_data <- list(
@@ -26,18 +29,15 @@ stan_data <- list(
   z       = dat$elevation)
 
 
-model_stan  <-  stanc("model.stan")
-sm = stan_model(stanc_ret = model_stan, verbose=FALSE)
-
 #  Run the Model
 set.seed(123)
-n_iter <- 5000
-system.time(fit <- sampling(sm, 
-                            data=stan_data, 
-                            iter = n_iter ))
+n_iter <- 1000
+fit <- sampling(elevation_model_stan, 
+                data=stan_data, 
+                iter = n_iter )
 
 parameters <- c("a", "b", 'c', 'p_zero')
-burnin <- 2500
+burnin <- 500
 res_total <- data.frame(fit@sim$samples)[(burnin+1):n_iter,]
 res_total <- res_total [,parameters]
 
@@ -46,12 +46,14 @@ plot_info_table <- function(info){
   blank <- data.frame(x= 1:10, y = 1:10)
   pi <- ggplot(blank, aes(x, y)) +
     geom_blank() + ylab('') + xlab ('') + theme_void(10) +
-    annotation_custom(tableGrob(info)) 
+    annotation_custom(tableGrob(info))
   return(pi)
 }
 
 
-pdf('res_chik.pdf')
+
+
+pdf('res_chik_corrected.pdf')
 plot(fit, plotfun = "trace", pars = parameters, inc_warmup = TRUE)
 par(mfrow=c(2,2))
 hist(res_total$a, col = 'red', main = 'a')
@@ -69,7 +71,7 @@ plot_info_table(results) +
   ggtitle('Median and CrI of posterior dist')
 
 
-write.csv(results, 'results_final_chik.csv')
+write.csv(results, 'results_final_chik_corrected.csv')
 
 estimated_pars <- results[,'median']
 
@@ -118,7 +120,7 @@ plot_info_table(pars_max_LL)
 
 
 library(readr)
-estimated_pars <- read_csv("results_final_chik.csv")
+estimated_pars <- read_csv("results_final_chik_corrected.csv")
 
 prob_mod <- function(params)
 {
@@ -127,7 +129,7 @@ prob_mod <- function(params)
   par_c  <- params[3]
   prob_zero <- params[4]
   z <- as.matrix(dat$elevation)
-
+  
   
   prob <-  (( 1+exp( -par_a* par_b ) ) / (1+exp( par_a *( z - par_b ) ))  * (1-par_c) + par_c) 
   return(prob)
